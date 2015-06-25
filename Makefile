@@ -4,15 +4,30 @@ DBG = -g
 DEFINES ?=
 LDFLAGS = -shared -lpthread -lrt -lm
 
-DOCDIR = doc
-LIBDIR = lib
+BINDIR = ./bin
+LIBDIR = ./lib
 INCDIR = ./inc
 SRCDIR = ./src
+ROOTS = pipeline
+BINS = $(ROOTS:%=$(BINDIR)/%)
+OBJS = $(ROOTS:%=$(BINDIR)/%.o)
+DEFAULT_ENERGY_LIBS = -lem-dummy
 
-all: $(LIBDIR) $(LIBDIR)/libhbt-acc-pow.so
+all: $(BINDIR) $(LIBDIR) $(LIBDIR)/libhbt-acc-pow.so $(BINS)
+
+$(BINDIR):
+	-mkdir -p $(BINDIR)
 
 $(LIBDIR):
 	-mkdir -p $(LIBDIR)
+
+$(BINDIR)/%.o : $(SRCDIR)/%.c
+	$(CXX) -c $(CXXFLAGS) $(DEFINES) $(DBG) -o $@ $<
+
+$(BINS) : $(OBJS)
+
+$(BINS) : % : %.o
+	$(CXX) $(CXXFLAGS) -o $@ $< -Llib -lhbt-acc-pow $(DEFAULT_ENERGY_LIBS) -lpthread -lrt -lm
 
 $(LIBDIR)/libhbt-acc-pow.so: $(SRCDIR)/heartbeat-tree-accuracy-power.c $(SRCDIR)/heartbeat-tree-util.c
 	$(CXX) $(CXXFLAGS) -DHEARTBEAT_MODE_ACC_POW $(LDFLAGS) -Wl,-soname,$(@F) -o $@ $^
@@ -29,4 +44,4 @@ uninstall:
 
 ## cleaning
 clean:
-	-rm -rf $(LIBDIR) *.log *~ $(SRCDIR)/*~
+	-rm -rf $(LIBDIR) $(BINDIR) *.log *~ $(SRCDIR)/*~
