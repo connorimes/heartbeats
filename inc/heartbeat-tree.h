@@ -76,6 +76,14 @@ uint64_t hb_get_window_size(const heartbeat_t* hb);
 uint64_t hb_get_buffer_depth(const heartbeat_t* hb);
 
 /**
+ * Returns the current user tag
+ *
+ * @param hb pointer to heartbeat_t
+ * @return the current user tag (uint64_t)
+ */
+uint64_t hb_get_user_tag(const heartbeat_t* hb);
+
+/**
  * Get the total time for the life of this heartbeat.
  *
  * @param hb pointer to heartbeat_t

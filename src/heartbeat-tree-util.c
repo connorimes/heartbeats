@@ -49,6 +49,10 @@ void hb_get_current(const heartbeat_t* hb,
   hb_get_history(hb, record, 1);
 }
 
+uint64_t hb_get_user_tag(const heartbeat_t* hb) {
+  return hb->ld.log[hb->ld.read_index].user_tag;
+}
+
 int64_t hb_get_global_time(const heartbeat_t* hb) {
   return hb->ld.td.total_time;
 }
