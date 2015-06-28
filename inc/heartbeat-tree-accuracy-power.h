@@ -13,7 +13,7 @@ extern "C" {
 
 #include "heartbeat-tree-accuracy-power-types.h"
 #include "heartbeat-tree-accuracy.h"
-#include <energymon/em-generic.h>
+#include <energymon/energymon.h>
 #include <stdint.h>
 
 /**

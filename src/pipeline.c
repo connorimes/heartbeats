@@ -6,9 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define EM_GENERIC
+#define EM_DEFAULT
 #include "heartbeat-tree-accuracy-power.h"
-#include <energymon/em-generic.h>
+#include <energymon/energymon.h>
 
 int main(int argc, char** argv) {
   if (argc != 2) {

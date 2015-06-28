@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <energymon/em-generic.h>
+#include <energymon/energymon.h>
 #include "heartbeat-tree-accuracy-power.h"
 
 #define __STDC_FORMAT_MACROS

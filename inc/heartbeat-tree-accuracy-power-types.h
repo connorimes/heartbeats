@@ -15,7 +15,7 @@ extern "C" {
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
 #include <pthread.h>
 #endif
-#include <energymon/em-generic.h>
+#include <energymon/energymon.h>
 
 typedef struct {
   int64_t last_timestamp;
