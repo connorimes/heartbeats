@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
- #include <energymon/em-generic.h>
+#include <energymon/em-generic.h>
 #include "heartbeat-tree-accuracy-power.h"
 
 #define __STDC_FORMAT_MACROS
@@ -24,7 +24,7 @@ static inline void finish_energy_readings(uint64_t num_energy_impls,
   for (i = 0; energy_impls != NULL && i < num_energy_impls; i++) {
     if (energy_impls[i].ffinish != NULL) {
       energy_impls[i].fsource(energy_source);
-      if (energy_impls[i].ffinish()) {
+      if (energy_impls[i].ffinish(&energy_impls[i])) {
         fprintf(stderr, "Error finishing energy reading from: %s\n",
                 energy_source);
       } else {
@@ -75,7 +75,7 @@ static inline int init_energy_resource(_heartbeat_energy_resource* er,
         return 1;
       }
       energy_impls[i].fsource(em_src);
-      if (energy_impls[i].finit != NULL && energy_impls[i].finit()) {
+      if (energy_impls[i].finit != NULL && energy_impls[i].finit(&energy_impls[i])) {
         fprintf(stderr, "Failed to initialize energy reading from: %s\n",
                 em_src);
         // cleanup previously started implementations
@@ -387,7 +387,7 @@ static inline double get_energy(_heartbeat_energy_resource* er) {
   char em_src[100];
   if (er != NULL && er->energy_impls != NULL) {
     for (i = 0; i < er->num_energy_impls; i++) {
-      energy_tmp = er->energy_impls[i].fread();
+      energy_tmp = er->energy_impls[i].fread(&er->energy_impls[i]);
       if (energy_tmp < 0) {
         fprintf(stderr, "heartbeat: Bad energy reading from: %s\n",
                 er->energy_impls[i].fsource(em_src));
