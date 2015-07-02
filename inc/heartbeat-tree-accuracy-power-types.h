@@ -15,7 +15,8 @@ extern "C" {
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
 #include <pthread.h>
 #endif
-#include <energymon/energymon.h>
+
+typedef double (_hb_get_energy_func) (void);
 
 typedef struct {
   int64_t last_timestamp;
@@ -32,11 +33,6 @@ typedef struct {
   double total_accuracy;
   double window_accuracy;
 } _heartbeat_accuracy_data;
-
-typedef struct {
-  unsigned int num_energy_impls;
-  em_impl* energy_impls;
-} _heartbeat_energy_resource;
 
 typedef struct {
   double last_energy;
@@ -80,12 +76,12 @@ typedef struct {
 
   // data
   _heartbeat_time_data td;
-  _heartbeat_energy_resource er;
 } _heartbeat_shared_data;
 
 typedef struct {
   char valid;
   uint64_t counter;
+  _hb_get_energy_func* ef;
 
   // data
   _heartbeat_time_data td;
@@ -110,6 +106,7 @@ typedef struct _heartbeat_t {
 
 typedef _heartbeat_t heartbeat_t;
 typedef _heartbeat_record_t heartbeat_record_t;
+typedef _hb_get_energy_func hb_get_energy_func;
 
 #ifdef __cplusplus
 }

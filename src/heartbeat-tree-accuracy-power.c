@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <energymon/energymon.h>
 #include "heartbeat-tree-accuracy-power.h"
 
 #define __STDC_FORMAT_MACROS
@@ -16,23 +15,6 @@
 #ifndef HEARTBEAT_ACCURACY_DEFAULT
   #define HEARTBEAT_ACCURACY_DEFAULT 0.0
 #endif
-
-static inline void finish_energy_readings(uint64_t num_energy_impls,
-                                          em_impl* energy_impls) {
-  uint64_t i;
-  char energy_source[100];
-  for (i = 0; energy_impls != NULL && i < num_energy_impls; i++) {
-    if (energy_impls[i].ffinish != NULL) {
-      energy_impls[i].fsource(energy_source);
-      if (energy_impls[i].ffinish(&energy_impls[i])) {
-        fprintf(stderr, "Error finishing energy reading from: %s\n",
-                energy_source);
-      } else {
-        printf("Finished energy reading from: %s\n", energy_source);
-      }
-    }
-  }
-}
 
 static inline void init_time_data(_heartbeat_time_data* td) {
   td->last_timestamp = -1;
@@ -56,45 +38,13 @@ static inline void init_energy_data(_heartbeat_energy_data* ed) {
   ed->window_energy = 0;
 }
 
-static inline int init_energy_resource(_heartbeat_energy_resource* er,
-                                       uint64_t num_energy_impls,
-                                       em_impl* energy_impls) {
-  uint64_t i;
-  char em_src[100];
-
-  er->num_energy_impls = 0;
-  er->energy_impls = NULL;
-  if (energy_impls != NULL) {
-    for (i = 0; i < num_energy_impls; i++) {
-      // fread and fsource functions are required, finit and ffinish are not
-      if (energy_impls[i].fread == NULL || energy_impls[i].fsource == NULL) {
-        fprintf(stderr, "hb-energy implementation at index %"PRIu64
-                " is missing fread and/or fsource\n", i);
-        // cleanup previously started implementations
-        finish_energy_readings(i, energy_impls);
-        return 1;
-      }
-      energy_impls[i].fsource(em_src);
-      if (energy_impls[i].finit != NULL && energy_impls[i].finit(&energy_impls[i])) {
-        fprintf(stderr, "Failed to initialize energy reading from: %s\n",
-                em_src);
-        // cleanup previously started implementations
-        finish_energy_readings(i, energy_impls);
-        return 1;
-      }
-      printf("Initialized energy reading from: %s\n", em_src);
-    }
-    er->num_energy_impls = num_energy_impls;
-    er->energy_impls = energy_impls;
-  }
-  return 0;
-}
-
 static inline int init_local_data(_heartbeat_local_data* ld,
                                   uint64_t buffer_depth,
-                                  const char* log_name) {
+                                  const char* log_name,
+                                  hb_get_energy_func* ef) {
   ld->valid = 0;
   ld->counter = 0;
+  ld->ef = ef;
   ld->buffer_depth = buffer_depth;
   ld->buffer_index = 0;
   ld->read_index = 0;
@@ -130,27 +80,19 @@ static inline int init_local_data(_heartbeat_local_data* ld,
   return 0;
 }
 
-static inline int init_shared_data(_heartbeat_shared_data* sd,
-                                   uint64_t num_energy_impls,
-                                   em_impl* energy_impls) {
+static inline void init_shared_data(_heartbeat_shared_data* sd) {
   sd->valid = 0;
   sd->counter = 0;
-  // setup energy readers
-  if (init_energy_resource(&sd->er, num_energy_impls, energy_impls)) {
-    return 1;
-  }
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
   pthread_mutex_init(&sd->mutex, NULL);
 #endif
-  return 0;
 }
 
 heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
                                     uint64_t window_size,
                                     uint64_t buffer_depth,
                                     const char* log_name,
-                                    uint64_t num_energy_impls,
-                                    em_impl* energy_impls) {
+                                    hb_get_energy_func* read_energy_func) {
   if (buffer_depth < window_size) {
     fprintf(stderr, "Buffer depth must be >= window size\n");
     return NULL;
@@ -179,17 +121,14 @@ heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
       heartbeat_finish(hb);
       return NULL;
     }
-    if (init_shared_data(hb->sd, num_energy_impls, energy_impls)) {
-      heartbeat_finish(hb);
-      return NULL;
-    }
+    init_shared_data(hb->sd);
   } else {
     // point to parent's shared data
     hb->sd = hb->parent->sd;
   }
 
   // local data
-  if (init_local_data(&hb->ld, buffer_depth, log_name)) {
+  if (init_local_data(&hb->ld, buffer_depth, log_name, read_energy_func)) {
     heartbeat_finish(hb);
     return NULL;
   }
@@ -202,7 +141,7 @@ heartbeat_t* heartbeat_acc_init(heartbeat_t* parent,
                                 uint64_t buffer_depth,
                                 const char* log_name) {
   return heartbeat_acc_pow_init(parent, window_size, buffer_depth, log_name,
-                                0, NULL);
+                                NULL);
 }
 
 heartbeat_t* heartbeat_init(heartbeat_t* parent,
@@ -210,7 +149,7 @@ heartbeat_t* heartbeat_init(heartbeat_t* parent,
                             uint64_t buffer_depth,
                             const char* log_name) {
   return heartbeat_acc_pow_init(parent, window_size, buffer_depth, log_name,
-                                0, NULL);
+                                NULL);
 }
 
 /**
@@ -253,8 +192,6 @@ static void hb_flush_buffer(heartbeat_t* hb) {
 void heartbeat_finish(heartbeat_t* hb) {
   if (hb != NULL) {
     if (hb->parent == NULL && hb->sd != NULL) {
-      // this hb owns the shared data - clean it up
-      finish_energy_readings(hb->sd->er.num_energy_impls, hb->sd->er.energy_impls);
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
       pthread_mutex_destroy(&hb->sd->mutex);
 #endif
@@ -380,25 +317,6 @@ static inline int64_t get_time() {
   return (int64_t) time_info.tv_sec * 1000000000 + (int64_t) time_info.tv_nsec;
 }
 
-static inline double get_energy(_heartbeat_energy_resource* er) {
-  double total_energy = 0.0;
-  double energy_tmp;
-  uint64_t i;
-  char em_src[100];
-  if (er != NULL && er->energy_impls != NULL) {
-    for (i = 0; i < er->num_energy_impls; i++) {
-      energy_tmp = er->energy_impls[i].fread(&er->energy_impls[i]);
-      if (energy_tmp < 0) {
-        fprintf(stderr, "heartbeat: Bad energy reading from: %s\n",
-                er->energy_impls[i].fsource(em_src));
-        continue;
-      }
-      total_energy += energy_tmp;
-    }
-  }
-  return total_energy;
-}
-
 int64_t heartbeat_acc(heartbeat_t* hb,
                       uint64_t user_tag,
                       uint64_t work,
@@ -413,7 +331,7 @@ int64_t heartbeat_acc(heartbeat_t* hb,
     hb->ld.td.last_timestamp = hb_prev->ld.td.last_timestamp;
     hb->ld.ed.last_energy = hb_prev->ld.ed.last_energy;
   }
-  double energy = get_energy(&hb->sd->er);
+  double energy = hb->ld.ef == NULL ? 0.0 : hb->ld.ef();
   process_heartbeat(hb, user_tag, work, accuracy, time, energy);
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
   pthread_mutex_unlock(&hb->sd->mutex);

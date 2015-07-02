@@ -8,7 +8,10 @@
 
 #define EM_DEFAULT
 #include "heartbeat-tree-accuracy-power.h"
-#include <energymon/energymon.h>
+
+double get_energy(void) {
+  return 0.0;
+}
 
 int main(int argc, char** argv) {
   if (argc != 2) {
@@ -20,13 +23,11 @@ int main(int argc, char** argv) {
   int i;
   const int iterations = atoi(argv[1]);
 
-  // initialize energy reader and heartbeats
-  em_impl energymon;
-  em_impl_get(&energymon);
-  heartbeat_t* heart = heartbeat_acc_pow_init(NULL, 20, 20, "heartbeat.log", 1, &energymon);
-  heartbeat_t* heart_recv = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_recv.log", 0, NULL);
-  heartbeat_t* heart_work = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_work.log", 0, NULL);
-  heartbeat_t* heart_send = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_send.log", 0, NULL);
+  // initialize heartbeats
+  heartbeat_t* heart = heartbeat_acc_pow_init(NULL, 20, 20, "heartbeat.log", &get_energy);
+  heartbeat_t* heart_recv = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_recv.log", &get_energy);
+  heartbeat_t* heart_work = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_work.log", &get_energy);
+  heartbeat_t* heart_send = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_send.log", &get_energy);
   usleep(1000);
 
   for(i = 0; i < iterations; i++) {

@@ -11,7 +11,6 @@ SRCDIR = ./src
 ROOTS = pipeline
 BINS = $(ROOTS:%=$(BINDIR)/%)
 OBJS = $(ROOTS:%=$(BINDIR)/%.o)
-DEFAULT_ENERGY_LIBS = -lem-dummy
 
 all: $(BINDIR) $(LIBDIR) $(LIBDIR)/libhbt-acc-pow.so $(BINS)
 
@@ -27,7 +26,7 @@ $(BINDIR)/%.o : $(SRCDIR)/%.c
 $(BINS) : $(OBJS)
 
 $(BINS) : % : %.o
-	$(CXX) $(CXXFLAGS) -o $@ $< -Llib -lhbt-acc-pow $(DEFAULT_ENERGY_LIBS) -lpthread -lrt -lm
+	$(CXX) $(CXXFLAGS) -o $@ $< -Llib -lhbt-acc-pow -lpthread -lrt -lm
 
 $(LIBDIR)/libhbt-acc-pow.so: $(SRCDIR)/heartbeat-tree-accuracy-power.c $(SRCDIR)/heartbeat-tree-util.c
 	$(CXX) $(CXXFLAGS) -DHEARTBEAT_MODE_ACC_POW $(LDFLAGS) -Wl,-soname,$(@F) -o $@ $^

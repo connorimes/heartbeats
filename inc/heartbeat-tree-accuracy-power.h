@@ -13,7 +13,6 @@ extern "C" {
 
 #include "heartbeat-tree-accuracy-power-types.h"
 #include "heartbeat-tree-accuracy.h"
-#include <energymon/energymon.h>
 #include <stdint.h>
 
 /**
@@ -23,16 +22,14 @@ extern "C" {
  * @param window_size
  * @param buffer_depth
  * @param log_name
- * @param num_energy_impls
- * @param energy_impls
+ * @param read_energy_func
  * @return heartbeat_t or NULL on failure
  */
 heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
                                     uint64_t window_size,
                                     uint64_t buffer_depth,
                                     const char* log_name,
-                                    uint64_t num_energy_impls,
-                                    em_impl* energy_impls);
+                                    hb_get_energy_func* read_energy_func);
 
 /**
  * Get the total energy for the life of this heartbeat.
