@@ -9,8 +9,9 @@
 #define EM_DEFAULT
 #include "heartbeat-tree-accuracy-power.h"
 
+double energy = 0.0;
 double get_energy(void) {
-  return 0.0;
+  return energy++;
 }
 
 int main(int argc, char** argv) {
