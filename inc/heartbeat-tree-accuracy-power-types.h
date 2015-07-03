@@ -16,7 +16,7 @@ extern "C" {
 #include <pthread.h>
 #endif
 
-typedef double (_hb_get_energy_func) (void);
+typedef double (_hb_get_energy_func) (void*);
 
 typedef struct {
   int64_t last_timestamp;
@@ -82,6 +82,7 @@ typedef struct {
   char valid;
   uint64_t counter;
   _hb_get_energy_func* ef;
+  void* ref_arg;
 
   // data
   _heartbeat_time_data td;

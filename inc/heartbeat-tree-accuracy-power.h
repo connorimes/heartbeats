@@ -23,13 +23,15 @@ extern "C" {
  * @param buffer_depth
  * @param log_name
  * @param read_energy_func
+ * @param ref_arg
  * @return heartbeat_t or NULL on failure
  */
 heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
                                     uint64_t window_size,
                                     uint64_t buffer_depth,
                                     const char* log_name,
-                                    hb_get_energy_func* read_energy_func);
+                                    hb_get_energy_func* read_energy_func,
+                                    void* ref_arg);
 
 /**
  * Get the total energy for the life of this heartbeat.

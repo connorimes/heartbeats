@@ -41,10 +41,12 @@ static inline void init_energy_data(_heartbeat_energy_data* ed) {
 static inline int init_local_data(_heartbeat_local_data* ld,
                                   uint64_t buffer_depth,
                                   const char* log_name,
-                                  hb_get_energy_func* ef) {
+                                  hb_get_energy_func* ef,
+                                  void* ref_arg) {
   ld->valid = 0;
   ld->counter = 0;
   ld->ef = ef;
+  ld->ref_arg = ref_arg;
   ld->buffer_depth = buffer_depth;
   ld->buffer_index = 0;
   ld->read_index = 0;
@@ -92,7 +94,8 @@ heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
                                     uint64_t window_size,
                                     uint64_t buffer_depth,
                                     const char* log_name,
-                                    hb_get_energy_func* read_energy_func) {
+                                    hb_get_energy_func* read_energy_func,
+                                    void* ref_arg) {
   if (buffer_depth < window_size) {
     fprintf(stderr, "Buffer depth must be >= window size\n");
     return NULL;
@@ -128,7 +131,8 @@ heartbeat_t* heartbeat_acc_pow_init(heartbeat_t* parent,
   }
 
   // local data
-  if (init_local_data(&hb->ld, buffer_depth, log_name, read_energy_func)) {
+  if (init_local_data(&hb->ld, buffer_depth, log_name, read_energy_func,
+                      ref_arg)) {
     heartbeat_finish(hb);
     return NULL;
   }
@@ -141,7 +145,7 @@ heartbeat_t* heartbeat_acc_init(heartbeat_t* parent,
                                 uint64_t buffer_depth,
                                 const char* log_name) {
   return heartbeat_acc_pow_init(parent, window_size, buffer_depth, log_name,
-                                NULL);
+                                NULL, NULL);
 }
 
 heartbeat_t* heartbeat_init(heartbeat_t* parent,
@@ -149,7 +153,7 @@ heartbeat_t* heartbeat_init(heartbeat_t* parent,
                             uint64_t buffer_depth,
                             const char* log_name) {
   return heartbeat_acc_pow_init(parent, window_size, buffer_depth, log_name,
-                                NULL);
+                                NULL, NULL);
 }
 
 /**
@@ -331,7 +335,7 @@ int64_t heartbeat_acc(heartbeat_t* hb,
     hb->ld.td.last_timestamp = hb_prev->ld.td.last_timestamp;
     hb->ld.ed.last_energy = hb_prev->ld.ed.last_energy;
   }
-  double energy = hb->ld.ef == NULL ? 0.0 : hb->ld.ef();
+  double energy = hb->ld.ef == NULL ? 0.0 : hb->ld.ef(hb->ld.ref_arg);
   process_heartbeat(hb, user_tag, work, accuracy, time, energy);
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
   pthread_mutex_unlock(&hb->sd->mutex);

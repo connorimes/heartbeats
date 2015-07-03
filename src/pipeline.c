@@ -10,7 +10,7 @@
 #include "heartbeat-tree-accuracy-power.h"
 
 double energy = 0.0;
-double get_energy(void) {
+double get_energy(void* ref_arg) {
   return energy++;
 }
 
@@ -25,10 +25,10 @@ int main(int argc, char** argv) {
   const int iterations = atoi(argv[1]);
 
   // initialize heartbeats
-  heartbeat_t* heart = heartbeat_acc_pow_init(NULL, 20, 20, "heartbeat.log", &get_energy);
-  heartbeat_t* heart_recv = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_recv.log", &get_energy);
-  heartbeat_t* heart_work = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_work.log", &get_energy);
-  heartbeat_t* heart_send = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_send.log", &get_energy);
+  heartbeat_t* heart = heartbeat_acc_pow_init(NULL, 20, 20, "heartbeat.log", &get_energy, NULL);
+  heartbeat_t* heart_recv = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_recv.log", &get_energy, NULL);
+  heartbeat_t* heart_work = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_work.log", &get_energy, NULL);
+  heartbeat_t* heart_send = heartbeat_acc_pow_init(heart, 20, 20, "heartbeat_send.log", &get_energy, NULL);
   usleep(1000);
 
   for(i = 0; i < iterations; i++) {
