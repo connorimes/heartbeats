@@ -335,7 +335,8 @@ int64_t heartbeat_acc(heartbeat_t* hb,
     hb->ld.td.last_timestamp = hb_prev->ld.td.last_timestamp;
     hb->ld.ed.last_energy = hb_prev->ld.ed.last_energy;
   }
-  double energy = hb->ld.ef == NULL ? 0.0 : hb->ld.ef(hb->ld.ref_arg);
+  // get data in microjoules and convert to joules
+  double energy = hb->ld.ef == NULL ? 0.0 : hb->ld.ef(hb->ld.ref_arg) / 1000000.0;
   process_heartbeat(hb, user_tag, work, accuracy, time, energy);
 #ifdef HEARTBEAT_USE_PTHREADS_LOCK
   pthread_mutex_unlock(&hb->sd->mutex);

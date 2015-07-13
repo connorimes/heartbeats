@@ -16,7 +16,8 @@ extern "C" {
 #include <pthread.h>
 #endif
 
-typedef double (_hb_get_energy_func) (void*);
+// function that returns an energy value in microjoules
+typedef unsigned long long (_hb_get_energy_func) (void*);
 
 typedef struct {
   int64_t last_timestamp;
