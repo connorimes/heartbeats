@@ -9,8 +9,8 @@
 #define EM_DEFAULT
 #include "heartbeat-tree-accuracy-power.h"
 
-unsigned long long energy = 0;
-unsigned long long get_energy(void* ref_arg) {
+long long energy = 0;
+long long get_energy(void* ref_arg) {
   return energy += 1000000;
 }
 
