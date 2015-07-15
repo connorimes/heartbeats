@@ -34,12 +34,12 @@ $(LIBDIR)/libhbt-acc-pow.so: $(SRCDIR)/heartbeat-tree-accuracy-power.c $(SRCDIR)
 # Installation
 install: all
 	install -m 0644 $(LIBDIR)/*.so /usr/local/lib/
-	mkdir -p /usr/local/include/heartbeats
-	install -m 0644 $(INCDIR)/* /usr/local/include/heartbeats/
+	mkdir -p /usr/local/include/heartbeats-tree
+	install -m 0644 $(INCDIR)/* /usr/local/include/heartbeats-tree/
 
 uninstall:
 	rm -f /usr/local/lib/libhbt-*.so
-	rm -rf /usr/local/include/heartbeats/
+	rm -rf /usr/local/include/heartbeats-tree/
 
 ## cleaning
 clean:
